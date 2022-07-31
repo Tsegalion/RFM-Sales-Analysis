@@ -96,12 +96,11 @@ DROP TABLE IF EXISTS #Temprfm
                     SELECT
                          Customer_name,
                          MAX(Order_date) AS Last_order_date,
-                         (SELECT
-                             MAX(Order_date) 
-                         FROM sales_data_sample) AS Max_order_date,
-	                     DATEDIFF(DD, MAX(Order_date), (SELECT MAX(Order_date) FROM sales_data_sample)) AS DaysSinceLastOrder,
+                         (SELECT MAX(Order_date) FROM sales_data_sample) AS Max_order_date,
+	                 DATEDIFF(DD, MAX(Order_date),
+			 (SELECT MAX(Order_date) FROM sales_data_sample)) AS DaysSinceLastOrder,
                          COUNT(Order_No) AS Frequency,
-	                     ROUND(SUM(Sales), 0) AS MonetaryValue
+	                 ROUND(SUM(Sales), 0) AS MonetaryValue
                     FROM sales_data_sample
                     GROUP BY Customer_name) AS T1) T2
 
