@@ -83,8 +83,8 @@ ORDER BY 2 DESC
 -- Classic cars sold most in both year 2003 and 2004
 
 -- Who are our best customer (this could be best answered with RFM)
-DROP TABLE IF EXISTS #Temprfm
-     SELECT *,
+WITH CTE_SalesD AS (
+SELECT *,
          rfm_recency + rfm_frequency + rfm_monetary AS rfm_Cell,
          CAST(rfm_recency AS VARCHAR) + CAST(rfm_frequency AS VARCHAR) + CAST(rfm_monetary  AS VARCHAR)rfm_cell_string
      FROM (
@@ -103,45 +103,21 @@ DROP TABLE IF EXISTS #Temprfm
                           COUNT(Order_No) AS Frequency,
 	                     ROUND(SUM(Sales), 0) AS MonetaryValue
                     FROM sales_data_sample
-                    GROUP BY Customer_name) AS T1) T2
-
-SELECT * 
-INTO #Temprfm
-FROM (SELECT *,
-         rfm_recency + rfm_frequency + rfm_monetary AS rfm_Cell,
-         CAST(rfm_recency AS VARCHAR) + CAST(rfm_frequency AS VARCHAR) + CAST(rfm_monetary  AS VARCHAR)rfm_cell_string
-     FROM (
-             SELECT *,
-		         NTILE(5) OVER (order by DaysSinceLastOrder desc) rfm_recency,
-		         NTILE(5) OVER (order by Frequency) rfm_frequency,
-		         NTILE(5) OVER (order by MonetaryValue) rfm_monetary
-             FROM (
-                    SELECT
-                         Customer_name,
-                         MAX(Order_date) AS Last_order_date,
-                         (SELECT 
-                              MAX(Order_date)
-                         FROM sales_data_sample) AS Max_order_date,
-	                     DATEDIFF(DD, MAX(Order_date), (SELECT MAX(Order_date) FROM sales_data_sample)) AS DaysSinceLastOrder,
-                         COUNT(Order_No) AS Frequency,
-	                     ROUND(SUM(Sales), 0) AS MonetaryValue
-                    FROM sales_data_sample
-                    GROUP BY Customer_name) AS T1) T2) AS F
-
+                    GROUP BY Customer_name) AS T1) T2)
 
 SELECT
-     Customer_name,
-     rfm_recency,
-     rfm_frequency,
-     rfm_monetary,
-     CASE
-         WHEN rfm_cell_string IN (555, 554, 544, 545, 553) THEN 'Big Ballers'
-         WHEN rfm_cell_string IN (543, 533, 444, 443, 433, 434) THEN 'Ballers'
-         WHEN rfm_cell_string IN (552, 323, 333,321, 422, 332, 432) THEN 'Active'
-         WHEN rfm_cell_string IN (511, 441, 411, 311, 331) THEN 'Active'
-         ELSE 'Not Relevant'
-         END AS Customer_Segmentation
-FROM #Temprfm
+      Customer_name,
+      rfm_recency,
+      rfm_frequency,
+      rfm_monetary,
+      CASE
+           WHEN rfm_cell_string IN (555, 554, 544, 545, 553) THEN 'Big Ballers'
+          WHEN rfm_cell_string IN (543, 533, 444, 443, 433, 434) THEN 'Ballers'
+          WHEN rfm_cell_string IN (552, 323, 333,321, 422, 332, 432) THEN 'Active'
+          WHEN rfm_cell_string IN (511, 441, 411, 311, 331) THEN 'Active'
+          ELSE 'Not Relevant'
+          END AS Customer_Segmentation
+FROM CTE_SalesD
 
 
 -- What city has the highest number of sales in a specific country?
